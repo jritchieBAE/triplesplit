@@ -27,11 +27,12 @@ func main() {
 		fmt.Println(err)
 		return
 	}
+	prefix, extn := getParts(*fileName)
 	reader := bufio.NewScanner(f)
-	var writer *fileArray
-	writer = &fileArray{
+	writer := &fileArray{
 		source:     reader,
-		namePrefix: "file",
+		namePrefix: prefix,
+		nameSuffix: extn,
 		count:      int64(*files),
 	}
 	defer writer.close()
@@ -43,9 +44,19 @@ func main() {
 	}
 }
 
+func getParts(name string) (string, string) {
+	paths := strings.Split(name, "/")
+	fileName := paths[len(paths)-1]
+	parts := strings.Split(fileName, ".")
+	extension := parts[len(parts)-1]
+	name = strings.Join(parts[0:len(parts)-1], "")
+	return name, extension
+}
+
 type fileArray struct {
 	source     *bufio.Scanner
 	namePrefix string
+	nameSuffix string
 	count      int64
 	total      int
 	file       int64
@@ -94,7 +105,7 @@ func (fa *fileArray) filename() string {
 		zeros := strings.Repeat("0", highestNameLength-len(name))
 		name = zeros + name
 	}
-	return fmt.Sprintf("%s-%s.txt", fa.namePrefix, name)
+	return fmt.Sprintf("%s-%s.%s", fa.namePrefix, name, fa.nameSuffix)
 }
 
 func (fa *fileArray) nextFile() {
